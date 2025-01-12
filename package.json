@@ -1,0 +1,23 @@
+{
+  "name": "libsql-index-error-reproduction",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "develop": "tsx watch --ignore local.db --ignore local.db-journal ./"
+  },
+  "dependencies": {
+    "@langchain/community": "^0.3.24",
+    "@langchain/core": "^0.3.29",
+    "@libsql/client": "^0.14.0",
+    "node-llama-cpp": "^3.4.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.5.3"
+  },
+  "private": true
+}
