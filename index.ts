@@ -19,6 +19,13 @@ function padOrTruncateEmbedding(embedding: number[], targetSize: number): number
 const client = createClient({
     url: 'file:local.db'
 });
+// create embeddingmodel
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const llamaEmbeddings = await LlamaCppEmbeddings.initialize({
+    modelPath: path.join(join(__dirname, '/llm-model'), 'Mistral-7B-Instruct-v0.3.Q4_K_M.gguf')
+});
+
 await client.batch(
     [
         `CREATE TABLE IF NOT EXISTS vectors
@@ -26,19 +33,12 @@ await client.batch(
              id        INTEGER PRIMARY KEY AUTOINCREMENT,
              content   TEXT,
              metadata  TEXT,
-             embedding F32_BLOB(4096)
+             embedding F32_BLOB(${llamaEmbeddings._model.embeddingVectorSize})
          );`,
         `CREATE INDEX IF NOT EXISTS vector_idx ON vectors (libsql_vector_idx(embedding));`,
     ],
     'write'
 );
-
-// create embeddingmodel
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const llamaEmbeddings = await LlamaCppEmbeddings.initialize({
-    modelPath: path.join(join(__dirname, '/llm-model'), 'Mistral-7B-Instruct-v0.3.Q4_K_M.gguf')
-});
 
 // get pdfloader and split the pdf into chunks
 const loader = new PDFLoader('testpdf');
@@ -56,8 +56,9 @@ const testVectorStore = new LibSQLVectorStore(llamaEmbeddings, {
 });
 const embeddings = await llamaEmbeddings.embedDocuments(splits.map((doc) => doc.pageContent));
 embeddings.forEach((embedding, i) => {
-    embeddings[i] = padOrTruncateEmbedding(embedding, 4096);
+    embeddings[i] = padOrTruncateEmbedding(embedding, llamaEmbeddings._model.embeddingVectorSize);
 });
+
 await testVectorStore.addVectors(embeddings, splits);
 const question = 'give me all words in the documents that relate to the word drugs'
 console.log('Retrieving documents for question:', question);
